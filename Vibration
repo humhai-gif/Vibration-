@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Durga Puja VIP Pass</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ min-height:100vh;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:20px;
+ font-family:Arial,sans-serif;
+ background:linear-gradient(135deg,#fff0d5,#ffd6df,#e4d8ff);
+}
+
+.card{
+ width:100%;
+ max-width:430px;
+ background:#fff;
+ padding:28px;
+ border-radius:25px;
+ text-align:center;
+ box-shadow:0 15px 45px rgba(0,0,0,.18);
+}
+
+.icon{font-size:58px}
+
+.badge{
+ display:inline-block;
+ padding:8px 15px;
+ border-radius:20px;
+ background:#ffe4a8;
+ font-size:14px;
+}
+
+h1{margin:15px 0 8px}
+p{color:#666;line-height:1.5}
+
+input,select{
+ width:100%;
+ padding:14px;
+ margin:7px 0;
+ border:1px solid #ddd;
+ border-radius:12px;
+ font-size:16px;
+ background:#fff;
+}
+
+button{
+ width:100%;
+ padding:15px;
+ margin-top:12px;
+ border:0;
+ border-radius:12px;
+ background:#d83b67;
+ color:#fff;
+ font-size:17px;
+ font-weight:bold;
+}
+
+#loading,#result{display:none}
+
+.loader{
+ width:50px;
+ height:50px;
+ margin:25px auto;
+ border:5px solid #eee;
+ border-top:5px solid #d83b67;
+ border-radius:50%;
+ animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+ to{transform:rotate(360deg)}
+}
+
+.status{min-height:25px}
+.small{font-size:12px;color:#999}
+
+.pass{
+ margin-top:20px;
+ padding:18px;
+ border:2px dashed #d83b67;
+ border-radius:16px;
+ background:#fff8fa;
+}
+
+/* Black screen */
+#screenOff{
+ display:none;
+ position:fixed;
+ inset:0;
+ z-index:99999;
+ background:#000;
+}
+
+/* Fake shutdown */
+#fakePowerOff{
+ display:none;
+ position:fixed;
+ inset:0;
+ z-index:100000;
+ background:#000;
+ color:#fff;
+ align-items:center;
+ justify-content:center;
+ flex-direction:column;
+ gap:18px;
+ font-family:Arial,sans-serif;
+}
+
+.powerIcon{
+ font-size:72px;
+ animation:pulse 1.5s infinite;
+}
+
+#powerText{
+ font-size:21px;
+ letter-spacing:1px;
+ text-align:center;
+}
+
+.powerBar{
+ width:200px;
+ height:5px;
+ background:#292929;
+ border-radius:5px;
+ overflow:hidden;
+}
+
+#powerProgress{
+ width:0%;
+ height:100%;
+ background:#fff;
+ transition:width 1s linear;
+}
+
+#countdown{
+ font-size:14px;
+ color:#888;
+}
+
+@keyframes pulse{
+ 50%{opacity:.35}
+}
+
+#result{
+ animation:appear .6s ease;
+}
+
+@keyframes appear{
+ from{
+  opacity:0;
+  transform:scale(.8);
+ }
+ to{
+  opacity:1;
+  transform:scale(1);
+ }
+}
+</style>
+</head>
+
+<body>
+
+<!-- FORM -->
+<div class="card" id="formBox">
+
+ <div class="icon">🎉</div>
+
+ <div class="badge">
+  শারদীয়া বিশেষ ঘোষণা
+ </div>
+
+ <h1>Durga Puja VIP Pass 🎟️</h1>
+
+ <p>
+  তোমার জন্য একটি Special Puja Pass তৈরি করো!
+ </p>
+
+ <input
+  id="name"
+  type="text"
+  placeholder="তোমার নাম লিখো"
+  maxlength="30"
+ >
+
+ <select id="category">
+  <option value="">Puja category নির্বাচন করো</option>
+  <option>🎟️ VIP Puja Entry</option>
+  <option>⭐ Special Guest</option>
+  <option>👨‍👩‍👧 Family Pass</option>
+  <option>🌙 Night Puja Entry</option>
+ </select>
+
+ <select id="dress">
+  <option value="">Dress choice নির্বাচন করো</option>
+  <option>👗 New Saree</option>
+  <option>🥻 Designer Kurti</option>
+  <option>👔 Puja Punjabi</option>
+  <option>👕 Festive Shirt</option>
+  <option>✨ Traditional Outfit</option>
+ </select>
+
+ <button onclick="generatePass()">
+  🎟️ Generate VIP Pass
+ </button>
+
+ <p class="small">
+  কোনো OTP, password, payment বা sensitive information নেওয়া হয় না।
+ </p>
+
+</div>
+
+
+<!-- LOADING -->
+<div class="card" id="loading">
+
+ <div class="icon">🎟️</div>
+
+ <h2>Pass তৈরি হচ্ছে...</h2>
+
+ <div class="loader"></div>
+
+ <p class="status" id="status">
+  Registration যাচাই করা হচ্ছে...
+ </p>
+
+</div>
+
+
+<!-- RESULT -->
+<div class="card" id="result">
+
+ <div class="icon">🎊</div>
+
+ <div class="badge">PUJA SPECIAL</div>
+
+ <h1>🎉 SURPRISE!</h1>
+
+ <p id="welcome"></p>
+
+ <div class="pass">
+
+  <strong>🎟️ PUJA SPECIAL PASS</strong>
+
+  <p id="passCategory"></p>
+
+  <p id="passDress"></p>
+
+  <p>শুভ শারদীয়া! ❤️</p>
+
+ </div>
+
+ <button onclick="location.reload()">
+  🔄 আবার চেষ্টা করো
+ </button>
+
+</div>
+
+
+<!-- BLACK SCREEN -->
+<div id="screenOff"></div>
+
+
+<!-- FAKE POWER OFF -->
+<div id="fakePowerOff">
+
+ <div class="powerIcon">⏻</div>
+
+ <div id="powerText">
+  Shutting down...
+ </div>
+
+ <div class="powerBar">
+  <div id="powerProgress"></div>
+ </div>
+
+ <div id="countdown">
+  System shutdown: 60s
+ </div>
+
+</div>
+
+
+<script>
+
+/* -----------------------------
+   Back button protection
+   during visual sequence
+----------------------------- */
+
+let shutdownRunning = false;
+
+history.pushState(null,"",location.href);
+
+window.addEventListener("popstate",function(){
+
+ if(shutdownRunning){
+
+  history.pushState(null,"",location.href);
+
+ }
+
+});
+
+
+/* -----------------------------
+   Generate
+----------------------------- */
+
+function generatePass(){
+
+ const name =
+  document.getElementById("name").value.trim();
+
+ const category =
+  document.getElementById("category").value;
+
+ const dress =
+  document.getElementById("dress").value;
+
+
+ if(!name || !category || !dress){
+
+  alert(
+   "নাম, Puja category এবং Dress choice নির্বাচন করো 😊"
+  );
+
+  return;
+ }
+
+
+ shutdownRunning = true;
+
+
+ /* Short vibration */
+ if("vibrate" in navigator){
+
+  let elapsed=0;
+
+  const vibrationLoop=setInterval(function(){
+
+   navigator.vibrate([250,150,250]);
+
+   elapsed+=650;
+
+   if(elapsed>=5000){
+
+    clearInterval(vibrationLoop);
+
+    navigator.vibrate(0);
+
+   }
+
+  },650);
+
+ }
+
+
+ /* Black screen */
+
+ const screen =
+  document.getElementById("screenOff");
+
+ screen.style.display="block";
+
+
+ setTimeout(function(){
+
+  screen.style.display="none";
+
+  startFakePowerOff(
+   name,
+   category,
+   dress
+  );
+
+ },2000);
+
+}
+
+
+/* -----------------------------
+   Approximately 1-minute
+   fake shutdown
+----------------------------- */
+
+function startFakePowerOff(
+ name,
+ category,
+ dress
+){
+
+ const fakePowerOff =
+  document.getElementById("fakePowerOff");
+
+ const powerText =
+  document.getElementById("powerText");
+
+ const powerProgress =
+  document.getElementById("powerProgress");
+
+ const countdown =
+  document.getElementById("countdown");
+
+
+ fakePowerOff.style.display="flex";
+
+ powerProgress.style.width="0%";
+
+
+ const steps=[
+
+  ["Shutting down...",10],
+
+  ["Closing applications...",25],
+
+  ["Saving system state...",40],
+
+  ["Stopping background services...",55],
+
+  ["Disconnecting system...",70],
+
+  ["Powering off...",85],
+
+  ["Final shutdown process...",95],
+
+  ["Power off complete...",100]
+
+ ];
+
+
+ let i=0;
+
+
+ function nextStep(){
+
+  if(i<steps.length){
+
+   powerText.textContent=
+    steps[i][0];
+
+   powerProgress.style.width=
+    steps[i][1]+"%";
+
+
+   const remaining =
+    Math.max(60-(i*7),0);
+
+   countdown.textContent=
+    "System shutdown: "+
+    remaining+
+    "s";
+
+
+   i++;
+
+   setTimeout(nextStep,7000);
+
+  }else{
+
+   powerText.textContent=
+    "Power off complete.";
+
+   countdown.textContent=
+    "Restarting...";
+
+
+   setTimeout(function(){
+
+    fakePowerOff.style.display="none";
+
+    showLoading(
+     name,
+     category,
+     dress
+    );
+
+   },4000);
+
+  }
+
+ }
+
+
+ nextStep();
+
+}
+
+
+/* -----------------------------
+   Loading
+----------------------------- */
+
+function showLoading(
+ name,
+ category,
+ dress
+){
+
+ document.getElementById(
+  "formBox"
+ ).style.display="none";
+
+
+ document.getElementById(
+  "loading"
+ ).style.display="block";
+
+
+ const messages=[
+
+  "Registration যাচাই করা হচ্ছে...",
+
+  "Puja entry status checking...",
+
+  "Dress choice যাচাই করা হচ্ছে...",
+
+  "VIP pass তৈরি হচ্ছে...",
+
+  "Special permission processing...",
+
+  "শেষ ধাপ চলছে..."
+
+ ];
+
+
+ let i=0;
+
+
+ const timer=setInterval(function(){
+
+  document.getElementById(
+   "status"
+  ).innerText=messages[i];
+
+
+  i++;
+
+
+  if(i>=messages.length){
+
+   clearInterval(timer);
+
+
+   setTimeout(function(){
+
+    showResult(
+     name,
+     category,
+     dress
+    );
+
+   },800);
+
+  }
+
+ },700);
+
+}
+
+
+/* -----------------------------
+   Final surprise
+----------------------------- */
+
+function showResult(
+ name,
+ category,
+ dress
+){
+
+ shutdownRunning=false;
+
+
+ document.getElementById(
+  "loading"
+ ).style.display="none";
+
+
+ document.getElementById(
+  "result"
+ ).style.display="block";
+
+
+ document.getElementById(
+  "welcome"
+ ).innerHTML=
+  "Congratulations, <b>"+
+  escapeHTML(name)+
+  "</b>! 🎟️";
+
+
+ document.getElementById(
+  "passCategory"
+ ).innerHTML=
+  "Category: <b>"+
+  escapeHTML(category)+
+  "</b>";
+
+
+ document.getElementById(
+  "passDress"
+ ).innerHTML=
+  "👗 Selected Dress: <b>"+
+  escapeHTML(dress)+
+  "</b>";
+
+}
+
+
+/* Safe text */
+function escapeHTML(text){
+
+ return text
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
+
+}
+
+</script>
+
+</body>
+</html>
